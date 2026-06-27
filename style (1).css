@@ -138,9 +138,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   border-left: 3px solid #16A34A;
   display: flex;
   align-items: center;    
-  gap: 8px;  
-}
-rendaAtual = perfil?.renda || 0
+  gap: 8px;}
+ rendaAtual = perfil?.renda || 0
 if (document.getElementById('renda-input')) {
   document.getElementById('renda-input').value = rendaAtual
 }
