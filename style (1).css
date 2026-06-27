@@ -128,3 +128,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-btn i{font-size:20px}
 .nav-btn span{font-size:10px;font-weight:500}
 .nav-btn.ativo{color:var(--verde)}
+.tempo-vida-card {
+  background: #DCFCE7;
+  color: #14532D;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border-left: 3px solid #16A34A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
