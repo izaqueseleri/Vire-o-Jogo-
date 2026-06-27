@@ -102,15 +102,19 @@ function calcularTempoDeVida(valor) {
 
 function atualizarTempoDeVida() {
   const valor = parseFloat(document.getElementById('valor-gasto').value) || 0
+  const rendaInput = parseFloat(document.getElementById('renda-input').value) || rendaAtual
   const el = document.getElementById('tempo-vida-msg')
   if (!el) return
-  const tempo = calcularTempoDeVida(valor)
-  if (tempo && valor > 0) {
-    el.innerHTML = '<i class="ti ti-clock"></i> Isso representa <strong>' + tempo + '</strong>'
-    el.style.display = 'flex'
-  } else {
-    el.style.display = 'none'
-  }
+  if (!rendaInput || rendaInput <= 0 || valor <= 0) { el.style.display = 'none'; return }
+  const horasPorMes = 220
+  const valorPorHora = rendaInput / horasPorMes
+  const horas = valor / valorPorHora
+  let tempo = ''
+  if (horas < 1) tempo = Math.round(horas * 60) + ' minutos do seu trabalho'
+  else if (horas < 8) tempo = horas.toFixed(1) + ' horas do seu trabalho'
+  else tempo = (horas / 8).toFixed(1) + ' dias úteis do seu trabalho'
+  el.innerHTML = '⏱️ Isso representa <strong>' + tempo + '</strong>'
+  el.style.display = 'flex'
 }
 
 // ─── GASTOS ──────────────────────────────────────────────
