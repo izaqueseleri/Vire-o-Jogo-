@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vire o Jogo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- TELA DE LOGIN -->
+    <div id="tela-auth" class="tela ativa">
+      <div class="auth-wrap">
+        <div class="auth-logo">Vire o Jogo</div>
+        <div class="auth-sub">Seu mentor financeiro inteligente</div>
+        <div class="auth-tabs">
+          <button class="auth-tab ativo" onclick="mudarTab('entrar')">Entrar</button>
+          <button class="auth-tab" onclick="mudarTab('cadastrar')">Cadastrar</button>
+        </div>
+        <div id="form-entrar">
+          <input type="email" id="email-entrar" placeholder="Seu e-mail" class="campo" />
+          <input type="password" id="senha-entrar" placeholder="Sua senha" class="campo" />
+          <button class="btn-primary" onclick="entrar()">Entrar</button>
+        </div>
+        <div id="form-cadastrar" style="display:none">
+          <input type="text" id="nome-cad" placeholder="Seu nome" class="campo" />
+          <input type="email" id="email-cad" placeholder="Seu e-mail" class="campo" />
+          <input type="password" id="senha-cad" placeholder="Crie uma senha" class="campo" />
+          <button class="btn-primary" onclick="cadastrar()">Criar conta grátis</button>
+        </div>
+        <div id="msg-auth" class="msg"></div>
+        <div class="auth-lgpd">🔒 Seus dados são protegidos pela LGPD</div>
+      </div>
+    </div>
+
+    <!-- PAINEL PRINCIPAL -->
+    <div id="tela-painel" class="tela" style="display:none">
+      <div class="header">
+        <div>
+          <div class="header-label">Bom dia,</div>
+          <div class="header-nome" id="nome-usuario">João</div>
+        </div>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </div>
+
+      <div class="saldo-card">
+        <div class="saldo-label">Disponível este mês</div>
+        <div class="saldo-valor" id="saldo-disp">R$ 0,00</div>
+        <div class="saldo-sub" id="saldo-sub">Carregando...</div>
+      </div>
+
+      <div class="grid2">
+        <div class="card-info">
+          <div class="ci-label">Renda mensal</div>
+          <div class="ci-valor verde" id="renda-val">R$ 0</div>
+        </div>
+        <div class="card-info">
+          <div class="ci-label">Gastos do mês</div>
+          <div class="ci-valor vermelho" id="gastos-val">R$ 0</div>
+        </div>
+      </div>
+
+      <!-- LANÇAR GASTO -->
+      <div class="secao-titulo">Lançar gasto</div>
+      <div class="lancar-wrap">
+        <input type="text" id="desc-gasto" placeholder="O que você gastou?" class="campo" />
+        <input type="number" id="valor-gasto" placeholder="R$ 0,00" class="campo" />
+        <select id="cat-gasto" class="campo">
+          <option value="Alimentação">Alimentação</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Moradia">Moradia</option>
+          <option value="Saúde">Saúde</option>
+          <option value="Lazer">Lazer</option>
+          <option value="Educação">Educação</option>
+          <option value="Dívidas">Dívidas</option>
+          <option value="Outros">Outros</option>
+        </select>
+        <button class="btn-primary" onclick="lancarGasto()">Registrar gasto</button>
+      </div>
+
+      <!-- CONFIGURAR RENDA -->
+      <div class="secao-titulo">Minha renda</div>
+      <div class="lancar-wrap">
+        <input type="number" id="renda-input" placeholder="Sua renda mensal" class="campo" />
+        <button class="btn-secondary" onclick="salvarRenda()">Salvar renda</button>
+      </div>
+
+      <!-- LISTA DE GASTOS -->
+      <div class="secao-titulo">Gastos recentes</div>
+      <div id="lista-gastos"></div>
+
+      <div id="msg-painel" class="msg"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
