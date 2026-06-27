@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vire o Jogo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="app">
+
+  <!-- AUTH -->
+  <div id="tela-auth">
+    <div class="auth-wrap">
+      <div class="auth-logo">Vire o Jogo</div>
+      <div class="auth-tagline">Seu mentor financeiro inteligente</div>
+      <div class="auth-tabs">
+        <button class="auth-tab ativo" onclick="mudarTab('entrar')">Entrar</button>
+        <button class="auth-tab" onclick="mudarTab('cadastrar')">Cadastrar</button>
+      </div>
+      <div id="form-entrar" class="form-group">
+        <input type="email" id="email-entrar" placeholder="Seu e-mail" class="campo"/>
+        <input type="password" id="senha-entrar" placeholder="Sua senha" class="campo"/>
+        <button class="btn-primary" onclick="entrar()">Entrar</button>
+      </div>
+      <div id="form-cadastrar" class="form-group" style="display:none">
+        <input type="text" id="nome-cad" placeholder="Seu nome" class="campo"/>
+        <input type="email" id="email-cad" placeholder="Seu e-mail" class="campo"/>
+        <input type="password" id="senha-cad" placeholder="Crie uma senha" class="campo"/>
+        <button class="btn-primary" onclick="cadastrar()">Criar conta grátis</button>
+      </div>
+      <div id="msg-auth" class="msg"></div>
+      <div class="auth-lgpd"><i class="ti ti-shield-check"></i> Dados protegidos pela LGPD</div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div id="tela-painel" style="display:none">
+    <div class="header">
+      <div>
+        <div class="header-label">Bom dia,</div>
+        <div class="header-nome" id="nome-usuario">João</div>
+      </div>
+      <button class="btn-sair" onclick="sair()"><i class="ti ti-logout"></i></button>
+    </div>
+
+    <!-- INÍCIO -->
+    <div id="aba-inicio" class="aba-content">
+      <div class="saldo-card">
+        <div class="saldo-label">DISPONÍVEL ESTE MÊS</div>
+        <div class="saldo-valor" id="saldo-disp">R$ 0,00</div>
+        <div class="saldo-sub" id="saldo-sub">Configure sua renda</div>
+        <div class="saldo-prog-bg"><div class="saldo-prog-fill" id="saldo-prog"></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card-info">
+          <div class="ci-label"><i class="ti ti-arrow-up-circle"></i> Renda</div>
+          <div class="ci-valor verde" id="renda-val">R$ 0</div>
+        </div>
+        <div class="card-info">
+          <div class="ci-label"><i class="ti ti-arrow-down-circle"></i> Gastos</div>
+          <div class="ci-valor vermelho" id="gastos-val">R$ 0</div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Lançar gasto</div>
+        <div class="form-group">
+          <input type="text" id="desc-gasto" placeholder="O que você gastou?" class="campo"/>
+          <input type="number" id="valor-gasto" placeholder="Valor em R$" class="campo" oninput="atualizarTempoDeVida()"/>
+          <div id="tempo-vida-msg" class="tempo-vida-card" style="display:none"></div>
+          <select id="cat-gasto" class="campo">
+            <option value="Alimentação">🍽️ Alimentação</option>
+            <option value="Transporte">🚗 Transporte</option>
+            <option value="Moradia">🏠 Moradia</option>
+            <option value="Saúde">💊 Saúde</option>
+            <option value="Lazer">🎮 Lazer</option>
+            <option value="Educação">📚 Educação</option>
+            <option value="Dívidas">💳 Dívidas</option>
+            <option value="Outros">📦 Outros</option>
+          </select>
+          <button class="btn-primary" onclick="lancarGasto()">Registrar gasto</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Minha renda mensal</div>
+        <div class="form-group">
+          <input type="number" id="renda-input" placeholder="Ex: 2000" class="campo"/>
+          <button class="btn-secondary" onclick="salvarRenda()">Salvar renda</button>
+        </div>
+      </div>
+      <div id="msg-painel" class="msg" style="margin:0 8px"></div>
+    </div>
+
+    <!-- GASTOS -->
+    <div id="aba-gastos" class="aba-content" style="display:none">
+      <div class="saldo-card">
+        <div class="saldo-label">GASTOS DO MÊS</div>
+        <div class="saldo-valor" id="dash-gastos">R$ 0,00</div>
+        <div class="saldo-sub" id="dash-sub">de R$ 0,00 disponíveis</div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Por categoria</div>
+        <div id="cats-chart"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Lançamentos recentes</div>
+        <div id="lista-gastos"><div class="vazio">Nenhum gasto ainda</div></div>
+      </div>
+    </div>
+
+    <!-- METAS -->
+    <div id="aba-metas" class="aba-content" style="display:none">
+      <div class="section-card">
+        <div class="section-titulo">Adicionar meta</div>
+        <div class="form-group">
+          <input type="text" id="meta-nome" placeholder="Nome da meta (ex: Reserva)" class="campo"/>
+          <input type="number" id="meta-valor" placeholder="Valor alvo em R$" class="campo"/>
+          <input type="number" id="meta-atual" placeholder="Quanto já tem?" class="campo"/>
+          <button class="btn-primary" onclick="adicionarMeta()">Criar meta</button>
+        </div>
+        <div id="msg-metas" class="msg"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Minhas metas</div>
+        <div id="lista-metas"><div class="vazio">Nenhuma meta criada</div></div>
+      </div>
+    </div>
+
+    <!-- CONQUISTAS -->
+    <div id="aba-conquistas" class="aba-content" style="display:none">
+      <div class="saldo-card">
+        <div class="saldo-label">SEQUÊNCIA ATUAL</div>
+        <div class="saldo-valor" id="streak-val">0 registros</div>
+        <div class="saldo-sub">Continue registrando seus gastos!</div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Medalhas</div>
+        <div class="medalhas-grid" id="medalhas-grid"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Missões da semana</div>
+        <div id="missoes-list"></div>
+      </div>
+    </div>
+
+    <!-- MENTOR -->
+    <div id="aba-mentor" class="aba-content" style="display:none">
+      <div class="saldo-card">
+        <div class="saldo-label">SEU MENTOR FINANCEIRO</div>
+        <div class="saldo-valor" style="font-size:20px">Mentor Vire</div>
+        <div class="saldo-sub">● Online agora</div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Insights do mês</div>
+        <div id="insights-list"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Pergunta do mês</div>
+        <div class="pergunta-card">
+          <p>O dinheiro que você gastou este mês refletiu o que realmente importa para você?</p>
+          <div class="pergunta-btns">
+            <button onclick="responderPergunta('Sim')" class="btn-resp verde">Sim</button>
+            <button onclick="responderPergunta('Mais ou menos')" class="btn-resp cinza">Mais ou menos</button>
+            <button onclick="responderPergunta('Não')" class="btn-resp cinza">Não</button>
+          </div>
+          <div id="resp-pergunta" class="msg"></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-titulo">Frase do dia</div>
+        <div class="frase-card">
+          <i class="ti ti-quote"></i>
+          <p id="frase-texto">Cada real é uma escolha sobre como você usa sua vida.</p>
+        </div>
+        <button class="btn-secondary" onclick="proximaFrase()" style="margin-top:10px">Outra frase</button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+      <button class="nav-btn ativo" onclick="mostrarAba('inicio')"><i class="ti ti-home"></i><span>Início</span></button>
+      <button class="nav-btn" onclick="mostrarAba('gastos')"><i class="ti ti-chart-bar"></i><span>Gastos</span></button>
+      <button class="nav-btn" onclick="mostrarAba('metas')"><i class="ti ti-target"></i><span>Metas</span></button>
+      <button class="nav-btn" onclick="mostrarAba('conquistas')"><i class="ti ti-trophy"></i><span>Conquistas</span></button>
+      <button class="nav-btn" onclick="mostrarAba('mentor')"><i class="ti ti-robot"></i><span>Mentor</span></button>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
