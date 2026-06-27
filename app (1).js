@@ -67,6 +67,9 @@ async function carregarDados() {
   const mes = new Date().toISOString().slice(0, 7)
   const { data: perfil } = await db.from('perfis').select('renda').eq('user_id', uid).single()
   rendaAtual = perfil?.renda || 0
+if (document.getElementById('renda-input')) {
+  document.getElementById('renda-input').value = rendaAtual
+}
   const { data: gastos } = await db.from('gastos').select('*').eq('user_id', uid).gte('criado_em', mes + '-01').order('criado_em', { ascending: false })
   dadosGastos = gastos || []
   const totalGastos = dadosGastos.reduce((s, g) => s + parseFloat(g.valor), 0)
