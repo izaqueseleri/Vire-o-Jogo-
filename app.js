@@ -6,15 +6,7 @@ let usuarioAtual = null
 let dadosGastos = []
 let dadosMetas = []
 let rendaAtual = 0
-
-const frases = [
-  'Cada real é uma escolha sobre como você usa sua vida.',
-  'Não é sobre quanto você ganha. É sobre o que você faz com o que ganha.',
-  'Cada real guardado hoje é uma preocupação a menos amanhã.',
-  'A mudança não começa no banco. Começa na sua cabeça.',
-  'Quitar uma dívida é reconquistar a sua liberdade.',
-  'Pequenos progressos todo dia se transformam em grandes resultados.',
-]
+const frases = ['Cada real é uma escolha sobre como você usa sua vida.','Não é sobre quanto você ganha. É sobre o que você faz com o que ganha.','Cada real guardado hoje é uma preocupação a menos amanhã.','A mudança não começa no banco. Começa na sua cabeça.','Quitar uma dívida é reconquistar a sua liberdade.','Pequenos progressos todo dia se transformam em grandes resultados.']
 let fraseIdx = 0
 
 function mudarTab(tab) {
@@ -64,11 +56,12 @@ async function carregarDados() {
   const uid = usuarioAtual.id
   const mes = new Date().toISOString().slice(0, 7)
   const { data: perfil } = await db.from('perfis').select('renda').eq('user_id', uid).single()
-  rendaAtual = perfil?.renda || 0
-  document.getElementById('renda-input').value = rendaAtual > 0 ? rendaAtual : ''
+  rendaAtual = perfil ? (perfil.renda || 0) : 0
+  const ri = document.getElementById('renda-input')
+  if (ri && rendaAtual > 0) ri.value = rendaAtual
   const { data: gastos } = await db.from('gastos').select('*').eq('user_id', uid).gte('criado_em', mes + '-01').order('criado_em', { ascending: false })
   dadosGastos = gastos || []
-  const totalGastos = dadosGastos.reduce((s, g) => s + parseFloat(g.valor), 0)
+  const totalGastos = dadosGastos.reduce(function(s, g) { return s + parseFloat(g.valor) }, 0)
   const disponivel = rendaAtual - totalGastos
   const pct = rendaAtual > 0 ? Math.min(100, Math.round(totalGastos / rendaAtual * 100)) : 0
   document.getElementById('renda-val').textContent = fmt(rendaAtual)
@@ -86,137 +79,114 @@ async function carregarDados() {
 }
 
 function atualizarTempoDeVida() {
-  const valor = parseFloat(document.getElementById('valor-gasto').value) || 0
-  const renda = parseFloat(document.getElementById('renda-input').value) || rendaAtual
-  const el = document.getElementById('tempo-vida-msg')
+  var valor = parseFloat(document.getElementById('valor-gasto').value) || 0
+  var renda = parseFloat(document.getElementById('renda-input').value) || rendaAtual
+  var el = document.getElementById('tempo-vida-msg')
   if (!el) return
   if (!renda || renda <= 0 || valor <= 0) { el.style.display = 'none'; return }
-  const horas = valor / (renda / 220)
-  let tempo = ''
+  var horas = valor / (renda / 220)
+  var tempo = ''
   if (horas < 1) tempo = Math.round(horas * 60) + ' minutos do seu trabalho'
   else if (horas < 8) tempo = horas.toFixed(1) + ' horas do seu trabalho'
   else tempo = (horas / 8).toFixed(1) + ' dias úteis do seu trabalho'
-  el.textContent = '⏱️ Isso representa ' + tempo
+  el.textContent = 'Isso representa ' + tempo
   el.style.display = 'block'
 }
 
 function renderizarGastos() {
-  const el = document.getElementById('lista-gastos')
+  var el = document.getElementById('lista-gastos')
   if (!dadosGastos.length) { el.innerHTML = '<div class="vazio">Nenhum gasto registrado ainda!</div>'; return }
-  const emojis = {'Alimentação':'🍽️','Transporte':'🚗','Moradia':'🏠','Saúde':'💊','Lazer':'🎮','Educação':'📚','Dívidas':'💳','Outros':'📦'}
-  el.innerHTML = dadosGastos.slice(0, 15).map(g => {
-    const horas = rendaAtual > 0 ? (parseFloat(g.valor) / (rendaAtual / 220)).toFixed(1) : null
-    const tempo = horas ? (horas < 1 ? Math.round(horas * 60) + 'min' : horas + 'h') + ' de trabalho' : ''
-    return '<div class="item-gasto">' +
-      '<div class="ig-emoji">' + (emojis[g.categoria]||'📦') + '</div>' +
-      '<div class="ig-info"><div class="ig-desc">' + g.descricao + '</div>' +
-      '<div class="ig-cat">' + g.categoria + (tempo ? ' · ⏱️ ' + tempo : '') + '</div></div>' +
-      '<div class="ig-valor">- ' + fmt(g.valor) + '</div></div>'
+  var emojis = {'Alimentação':'🍽️','Transporte':'🚗','Moradia':'🏠','Saúde':'💊','Lazer':'🎮','Educação':'📚','Dívidas':'💳','Outros':'📦'}
+  el.innerHTML = dadosGastos.slice(0, 15).map(function(g) {
+    return '<div class="item-gasto"><div class="ig-emoji">' + (emojis[g.categoria]||'📦') + '</div><div class="ig-info"><div class="ig-desc">' + g.descricao + '</div><div class="ig-cat">' + g.categoria + '</div></div><div class="ig-valor">- ' + fmt(g.valor) + '</div></div>'
   }).join('')
 }
 
 function renderizarCats() {
-  const el = document.getElementById('cats-chart')
-  const cats = {}
-  dadosGastos.forEach(g => { cats[g.categoria] = (cats[g.categoria]||0) + parseFloat(g.valor) })
+  var el = document.getElementById('cats-chart')
+  var cats = {}
+  dadosGastos.forEach(function(g) { cats[g.categoria] = (cats[g.categoria]||0) + parseFloat(g.valor) })
   if (!Object.keys(cats).length) { el.innerHTML = '<div class="vazio">Nenhum gasto registrado</div>'; return }
-  const max = Math.max(...Object.values(cats))
-  el.innerHTML = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([nome, val]) =>
-    '<div class="cat-item"><div class="cat-header"><span class="cat-nome">' + nome + '</span><span class="cat-valor">' + fmt(val) + '</span></div>' +
-    '<div class="cat-bg"><div class="cat-fill" style="width:' + Math.round(val/max*100) + '%"></div></div></div>'
-  ).join('')
+  var max = Math.max.apply(null, Object.values(cats))
+  el.innerHTML = Object.entries(cats).sort(function(a,b){return b[1]-a[1]}).map(function(entry) {
+    return '<div class="cat-item"><div class="cat-header"><span class="cat-nome">' + entry[0] + '</span><span class="cat-valor">' + fmt(entry[1]) + '</span></div><div class="cat-bg"><div class="cat-fill" style="width:' + Math.round(entry[1]/max*100) + '%"></div></div></div>'
+  }).join('')
 }
 
 async function lancarGasto() {
-  const desc = document.getElementById('desc-gasto').value.trim()
-  const valor = parseFloat(document.getElementById('valor-gasto').value)
-  const categoria = document.getElementById('cat-gasto').value
+  var desc = document.getElementById('desc-gasto').value.trim()
+  var valor = parseFloat(document.getElementById('valor-gasto').value)
+  var categoria = document.getElementById('cat-gasto').value
   if (!desc || !valor || valor <= 0) return mostrarMsg('msg-painel', 'Preencha descrição e valor.', 'erro')
-  const { error } = await db.from('gastos').insert({ user_id: usuarioAtual.id, descricao: desc, valor, categoria, criado_em: new Date().toISOString() })
+  var { error } = await db.from('gastos').insert({ user_id: usuarioAtual.id, descricao: desc, valor: valor, categoria: categoria, criado_em: new Date().toISOString() })
   if (error) mostrarMsg('msg-painel', 'Erro: ' + error.message, 'erro')
   else {
     document.getElementById('desc-gasto').value = ''
     document.getElementById('valor-gasto').value = ''
-    document.getElementById('tempo-vida-msg').style.display = 'none'
-    mostrarMsg('msg-painel', '✅ Gasto registrado!', 'sucesso')
+    var el = document.getElementById('tempo-vida-msg')
+    if (el) el.style.display = 'none'
+    mostrarMsg('msg-painel', 'Gasto registrado!', 'sucesso')
     await carregarDados()
   }
 }
 
 async function salvarRenda() {
-  const renda = parseFloat(document.getElementById('renda-input').value)
+  var renda = parseFloat(document.getElementById('renda-input').value)
   if (!renda || renda <= 0) return mostrarMsg('msg-painel', 'Digite sua renda.', 'erro')
-  const { error } = await db.from('perfis').upsert({ user_id: usuarioAtual.id, renda }, { onConflict: 'user_id' })
+  var { error } = await db.from('perfis').upsert({ user_id: usuarioAtual.id, renda: renda }, { onConflict: 'user_id' })
   if (error) mostrarMsg('msg-painel', 'Erro: ' + error.message, 'erro')
-  else { rendaAtual = renda; mostrarMsg('msg-painel', '✅ Renda salva!', 'sucesso'); await carregarDados() }
+  else { rendaAtual = renda; mostrarMsg('msg-painel', 'Renda salva!', 'sucesso'); await carregarDados() }
 }
 
 function renderizarMetas() {
-  const el = document.getElementById('lista-metas')
+  var el = document.getElementById('lista-metas')
   if (!dadosMetas.length) { el.innerHTML = '<div class="vazio">Nenhuma meta criada ainda!</div>'; return }
-  el.innerHTML = dadosMetas.map(m => {
-    const pct = Math.min(100, Math.round(m.atual / m.valor_alvo * 100))
-    return '<div class="meta-item"><div class="meta-header"><span class="meta-nome">' + m.nome + '</span><span class="meta-pct">' + pct + '%</span></div>' +
-      '<div class="meta-bg"><div class="meta-fill" style="width:' + pct + '%"></div></div>' +
-      '<div class="meta-vals">' + fmt(m.atual) + ' de ' + fmt(m.valor_alvo) + '</div></div>'
+  el.innerHTML = dadosMetas.map(function(m) {
+    var pct = Math.min(100, Math.round(m.atual / m.valor_alvo * 100))
+    return '<div class="meta-item"><div class="meta-header"><span class="meta-nome">' + m.nome + '</span><span class="meta-pct">' + pct + '%</span></div><div class="meta-bg"><div class="meta-fill" style="width:' + pct + '%"></div></div><div class="meta-vals">' + fmt(m.atual) + ' de ' + fmt(m.valor_alvo) + '</div></div>'
   }).join('')
 }
 
 async function adicionarMeta() {
-  const nome = document.getElementById('meta-nome').value.trim()
-  const valor_alvo = parseFloat(document.getElementById('meta-valor').value)
-  const atual = parseFloat(document.getElementById('meta-atual').value) || 0
+  var nome = document.getElementById('meta-nome').value.trim()
+  var valor_alvo = parseFloat(document.getElementById('meta-valor').value)
+  var atual = parseFloat(document.getElementById('meta-atual').value) || 0
   if (!nome || !valor_alvo) return mostrarMsg('msg-metas', 'Preencha nome e valor.', 'erro')
-  const { error } = await db.from('metas').insert({ user_id: usuarioAtual.id, nome, valor_alvo, atual })
+  var { error } = await db.from('metas').insert({ user_id: usuarioAtual.id, nome: nome, valor_alvo: valor_alvo, atual: atual })
   if (error) mostrarMsg('msg-metas', 'Erro: ' + error.message, 'erro')
   else {
     document.getElementById('meta-nome').value = ''
     document.getElementById('meta-valor').value = ''
     document.getElementById('meta-atual').value = ''
-    mostrarMsg('msg-metas', '✅ Meta criada!', 'sucesso')
+    mostrarMsg('msg-metas', 'Meta criada!', 'sucesso')
     await carregarDados()
   }
 }
 
 function renderizarConquistas() {
-  const medalhas = [
+  var medalhas = [
     {emoji:'🎯', nome:'Primeiro passo', desbloqueada:true},
     {emoji:'🔥', nome:'7 registros', desbloqueada:dadosGastos.length>=7},
-    {emoji:'💰', nome:'1° gasto', desbloqueada:dadosGastos.length>0},
+    {emoji:'💰', nome:'1 gasto', desbloqueada:dadosGastos.length>0},
     {emoji:'🏆', nome:'Meta criada', desbloqueada:dadosMetas.length>0},
     {emoji:'⭐', nome:'30 dias', desbloqueada:false},
-    {emoji:'👑', nome:'Dívida zerada', desbloqueada:false},
+    {emoji:'👑', nome:'Dívida zerada', desbloqueada:false}
   ]
-  document.getElementById('medalhas-grid').innerHTML = medalhas.map(m =>
-    '<div class="medalha"><div class="medalha-circle ' + (m.desbloqueada ? 'ouro' : 'bloq') + '">' + m.emoji + '</div>' +
-    '<div class="medalha-nome">' + m.nome + '</div></div>'
-  ).join('')
+  document.getElementById('medalhas-grid').innerHTML = medalhas.map(function(m) {
+    return '<div class="medalha"><div class="medalha-circle ' + (m.desbloqueada ? 'ouro' : 'bloq') + '">' + m.emoji + '</div><div class="medalha-nome">' + m.nome + '</div></div>'
+  }).join('')
   document.getElementById('streak-val').textContent = dadosGastos.length + ' registros'
-  const missoes = [
-    {emoji:'🚗', nome:'3 dias sem delivery', prog:66},
-    {emoji:'💰', nome:'Guardar R$50', prog:40},
-    {emoji:'📊', nome:'Registrar todos os gastos', prog:80},
-  ]
-  document.getElementById('missoes-list').innerHTML = missoes.map(m =>
-    '<div class="missao-item"><div class="missao-icon">' + m.emoji + '</div>' +
-    '<div class="missao-info"><div class="missao-nome">' + m.nome + '</div>' +
-    '<div class="missao-prog"><div class="missao-fill" style="width:' + m.prog + '%"></div></div></div>' +
-    '<span style="font-size:11px;color:var(--verde);font-weight:600">' + m.prog + '%</span></div>'
-  ).join('')
+  var missoes = [{emoji:'🚗',nome:'3 dias sem delivery',prog:66},{emoji:'💰',nome:'Guardar R$50',prog:40},{emoji:'📊',nome:'Registrar gastos',prog:80}]
+  document.getElementById('missoes-list').innerHTML = missoes.map(function(m) {
+    return '<div class="missao-item"><div class="missao-icon">' + m.emoji + '</div><div class="missao-info"><div class="missao-nome">' + m.nome + '</div><div class="missao-prog"><div class="missao-fill" style="width:' + m.prog + '%"></div></div></div><span style="font-size:11px;color:var(--verde);font-weight:600">' + m.prog + '%</span></div>'
+  }).join('')
 }
 
 function renderizarMentor() {
-  const totalGastos = dadosGastos.reduce((s,g) => s+parseFloat(g.valor), 0)
-  const insights = []
-  if (rendaAtual > 0 && totalGastos > rendaAtual * 0.8) {
-    insights.push({icon:'ti-alert-triangle', txt:'Você já usou mais de 80% da sua renda este mês. Fique atento!'})
-  }
-  insights.push({icon:'ti-bulb', txt:'Registre seus gastos todos os dias para ter uma visão clara das suas finanças.'})
-  insights.push({icon:'ti-target', txt:'Defina metas claras e acompanhe seu progresso regularmente.'})
-  insights.push({icon:'ti-heart', txt:'Cada pequena economia conta. Você está no caminho certo!'})
-  document.getElementById('insights-list').innerHTML = insights.map(i =>
-    '<div class="insight-item"><i class="ti ' + i.icon + '"></i><p>' + i.txt + '</p></div>'
-  ).join('')
+  var insights = [{icon:'ti-bulb',txt:'Registre seus gastos todos os dias para ter uma visão clara das suas finanças.'},{icon:'ti-target',txt:'Defina metas claras e acompanhe seu progresso regularmente.'},{icon:'ti-heart',txt:'Cada pequena economia conta. Você está no caminho certo!'}]
+  document.getElementById('insights-list').innerHTML = insights.map(function(i) {
+    return '<div class="insight-item"><i class="ti ' + i.icon + '"></i><p>' + i.txt + '</p></div>'
+  }).join('')
   document.getElementById('frase-texto').textContent = frases[fraseIdx]
 }
 
@@ -226,27 +196,27 @@ function proximaFrase() {
 }
 
 function responderPergunta(resp) {
-  const msgs = { 'Sim':'✅ Ótimo! Continue assim!', 'Mais ou menos':'📊 Vamos ajustar juntos.', 'Não':'💪 O próximo mês será melhor!' }
+  var msgs = {'Sim':'Ótimo! Continue assim!','Mais ou menos':'Vamos ajustar juntos.','Não':'O próximo mês será melhor!'}
   mostrarMsg('resp-pergunta', msgs[resp], 'sucesso')
 }
 
 function mostrarAba(aba) {
-  document.querySelectorAll('.aba-content').forEach(a => a.style.display = 'none')
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'))
+  document.querySelectorAll('.aba-content').forEach(function(a) { a.style.display = 'none' })
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('ativo') })
   document.getElementById('aba-' + aba).style.display = 'block'
-  const idx = ['inicio','gastos','metas','conquistas','mentor'].indexOf(aba)
-  const btns = document.querySelectorAll('.nav-btn')
+  var idx = ['inicio','gastos','metas','conquistas','mentor'].indexOf(aba)
+  var btns = document.querySelectorAll('.nav-btn')
   if (btns[idx]) btns[idx].classList.add('ativo')
 }
 
 function fmt(v) { return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0) }
 function mostrarMsg(id, texto, tipo) {
-  const el = document.getElementById(id)
+  var el = document.getElementById(id)
   if (!el) return
   el.textContent = texto; el.className = 'msg ' + tipo
-  setTimeout(()=>{ el.textContent=''; el.className='msg' }, 4000)
+  setTimeout(function(){ el.textContent=''; el.className='msg' }, 4000)
 }
 
-db.auth.onAuthStateChange((event, session) => {
-  if (session?.user) { usuarioAtual = session.user; abrirPainel() }
+db.auth.onAuthStateChange(function(event, session) {
+  if (session && session.user) { usuarioAtual = session.user; abrirPainel() }
 })
