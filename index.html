@@ -79,7 +79,8 @@
           <div class="section-titulo">Lançar gasto</div>
           <div class="form-group">
             <input type="text" id="desc-gasto" placeholder="O que você gastou?" class="campo"/>
-            <input type="number" id="valor-gasto" placeholder="Valor em R$" class="campo"/>
+           <input type="number" id="valor-gasto" placeholder="Valor em R$" class="campo" oninput="atualizarTempoDeVida()"/>
+<div id="tempo-vida-msg" class="tempo-vida-card" style="display:none"></div>
             <select id="cat-gasto" class="campo">
               <option value="Alimentação">🍽️ Alimentação</option>
               <option value="Transporte">🚗 Transporte</option>
